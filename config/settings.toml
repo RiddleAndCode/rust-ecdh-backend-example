@@ -1,0 +1,6 @@
+host = "0.0.0.0"
+port = 4000
+hkdf_salt = ""
+redis = "redis://127.0.0.1:6379/"
+key_pair_key = "_my_secret"
+log_level = "info"
