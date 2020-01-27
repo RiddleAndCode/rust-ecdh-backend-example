@@ -1,25 +1,33 @@
 #[macro_use]
 extern crate log;
 
-use anyhow::Error;
+use anyhow::{Error, Result};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::Server;
-use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
+use std::{fs, net};
 
-use ecdh_backend::{handle, Sessions};
+use ecdh_backend::{handle, ConfigBuilder, Sessions};
 
 #[tokio::main]
-async fn main() {
-    simple_logger::init_with_level(log::Level::Info).unwrap();
+async fn main() -> Result<()> {
+    simple_logger::init_with_level(log::Level::Info)?;
 
-    let addr = SocketAddr::new(IpAddr::from_str("0.0.0.0").unwrap(), 4000);
-    // let sessions = Sessions::new();
+    let addr = net::SocketAddr::new(net::IpAddr::from_str("0.0.0.0")?, 4000);
+    let config = ConfigBuilder::new()
+        .key_pair_pkcs8(fs::read("./config/secret.key")?)
+        .build()?;
+    let sessions = Sessions::new();
+    // TODO add config flags
 
     let make_svc = make_service_fn(move |_conn| {
-        // let sessions = sessions.clone();
-        let sessions = Sessions::new();
-        async move { Ok::<_, Error>(service_fn(move |req| handle(req, sessions.clone()))) }
+        let sessions = sessions.clone();
+        let config = config.clone();
+        async move {
+            Ok::<_, Error>(service_fn(move |req| {
+                handle(req, sessions.clone(), config.clone())
+            }))
+        }
     });
 
     info!("Starting server: {}", addr);
@@ -29,4 +37,5 @@ async fn main() {
         error!("server error: {}", e);
     }
     info!("Stopping server...");
+    Ok(())
 }
