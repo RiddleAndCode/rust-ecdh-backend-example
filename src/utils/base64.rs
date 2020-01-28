@@ -1,13 +1,16 @@
 use anyhow::Result;
-use bytes::buf::Buf;
-use hyper::{Body, Request};
+use hyper::body::Bytes;
 
-pub async fn decode_body<T>(req: Request<Body>) -> Result<Vec<u8>> {
-    Ok(base64::decode(hyper::body::aggregate(req).await?.bytes())?)
+pub fn read(bytes: &Bytes) -> Result<Bytes> {
+    Ok(base64::decode(bytes.as_ref())?.into())
 }
 
-pub mod module {
-    use serde::{Deserialize, Deserializer, Serializer};
+pub fn write(bytes: &Bytes) -> Bytes {
+    base64::encode(bytes.as_ref()).into()
+}
+
+pub mod serde {
+    use ::serde::{Deserialize, Deserializer, Serializer};
     use std::convert::TryFrom;
     use std::fmt;
 

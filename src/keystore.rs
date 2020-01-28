@@ -1,4 +1,4 @@
-use crate::utils::crypto;
+use crate::crypto;
 use anyhow::Result;
 use redis::AsyncCommands;
 use ring::hkdf;

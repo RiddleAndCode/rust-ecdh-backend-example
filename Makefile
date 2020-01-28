@@ -17,6 +17,10 @@ run:
 > cargo run
 .PHONY: run
 
+watch:
+> cargo watch -x run
+.PHONY: watch
+
 build:
 > cargo build
 .PHONY: build
@@ -45,7 +49,7 @@ docker-clean:
 .PHONY: docker-clean
 
 docker-db:
-> docker-compose run db
+> docker-compose run -p 6379:6379 db
 .PHONY: docker-db
 
 docker-genkey: docker-build

@@ -1,14 +1,15 @@
+use crate::crypto;
 use crate::settings::SettingsRef;
-use crate::utils::{base64, crypto, headers, json};
+use crate::utils::{base64, body, headers, json};
 use anyhow::Result;
 use hyper::{Body, Request, Response, StatusCode};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct PublicKeyExchangeMessage {
-    #[serde(with = "base64::module")]
+    #[serde(with = "base64::serde")]
     ephemeral_public_key: Vec<u8>,
 
-    #[serde(with = "base64::module")]
+    #[serde(with = "base64::serde")]
     signature: Vec<u8>,
 }
 
@@ -21,7 +22,7 @@ pub async fn create_session(req: Request<Body>, settings: SettingsRef) -> Result
                 .body(err.to_string().into())?)
         }
     };
-    let json_req: PublicKeyExchangeMessage = match json::body(req).await {
+    let json_req: PublicKeyExchangeMessage = match json::read(&body::read(req).await?) {
         Ok(json_req) => json_req,
         Err(err) => {
             return Ok(Response::builder()
@@ -63,5 +64,5 @@ pub async fn create_session(req: Request<Body>, settings: SettingsRef) -> Result
         ephemeral_public_key: ephemeral_public_key.as_ref().to_owned(),
         signature,
     };
-    json::res(&json_res)
+    json::res(json::write(&json_res)?)
 }

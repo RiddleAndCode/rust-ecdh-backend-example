@@ -7,6 +7,7 @@ extern crate anyhow;
 #[macro_use]
 extern crate serde;
 
+mod crypto;
 mod keystore;
 mod routes;
 mod settings;

@@ -1,5 +1,6 @@
 use crate::utils::algs::*;
 use anyhow::Result;
+use hyper::body::Bytes;
 use ring::{aead, agreement, hkdf, rand};
 use std::borrow::Cow;
 
@@ -38,16 +39,35 @@ impl SharedSecret {
         })
     }
 
+    pub fn write(&self, data: &Bytes) -> Result<Bytes> {
+        let mut res: Vec<u8> = data.as_ref().to_vec();
+        self.encrypt(&mut res)?;
+        Ok(res.into())
+    }
+
+    pub fn read(&self, data: &Bytes) -> Result<Bytes> {
+        let mut res: Vec<u8> = data.as_ref().to_vec();
+        let res = self.decrypt(&mut res)?.to_vec();
+        Ok(res.into())
+    }
+
     pub fn encrypt<T>(&self, data: &mut T) -> Result<()>
     where
         T: AsMut<[u8]> + for<'a> Extend<&'a u8>,
     {
-        self.key.seal_in_place_append_tag(
+        Ok(self.key.seal_in_place_append_tag(
             aead::Nonce::assume_unique_for_key([0; 12]),
             aead::Aad::empty(),
             data,
-        )?;
-        Ok(())
+        )?)
+    }
+
+    pub fn decrypt<'a>(&self, data: &'a mut [u8]) -> Result<&'a mut [u8]> {
+        Ok(self.key.open_in_place(
+            aead::Nonce::assume_unique_for_key([0; 12]),
+            aead::Aad::empty(),
+            data,
+        )?)
     }
 }
 

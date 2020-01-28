@@ -1,21 +1,22 @@
 use anyhow::Result;
-use bytes::buf::BufExt;
-use hyper::{Body, Request, Response};
+use hyper::{body::Bytes, Body, Response};
 
-pub async fn body<T>(req: Request<Body>) -> Result<T>
+pub fn read<T>(body: &Bytes) -> Result<T>
 where
     T: serde::de::DeserializeOwned,
 {
-    Ok(serde_json::from_reader(
-        hyper::body::aggregate(req).await?.reader(),
-    )?)
+    Ok(serde_json::from_slice(body.as_ref())?)
 }
 
-pub fn res<T>(res: &T) -> Result<Response<Body>>
+pub fn write<T>(res: &T) -> Result<Bytes>
 where
     T: serde::Serialize,
 {
+    Ok(serde_json::to_string(res)?.into())
+}
+
+pub fn res(body: Bytes) -> Result<Response<Body>> {
     Ok(Response::builder()
         .header("Content-type", "application/json")
-        .body(serde_json::to_string(res)?.into())?)
+        .body(body.into())?)
 }
