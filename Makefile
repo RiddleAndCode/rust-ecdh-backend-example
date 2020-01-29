@@ -10,8 +10,9 @@ ifeq ($(origin .RECIPEPREFIX), undefined)
 endif
 .RECIPEPREFIX = >
 
-DOCKER_TAG := ecdh_backend
+DOCKER_TAG ?= ecdh_backend
 DOCKER_SENTINAL := target/.docker-$(DOCKER_TAG)
+REDIS_PORT ?= 6379
 
 run:
 > cargo run
@@ -49,7 +50,7 @@ docker-clean:
 .PHONY: docker-clean
 
 docker-db:
-> docker-compose run -p 6379:6379 db
+> docker-compose run -p $(REDIS_PORT):6379 db
 .PHONY: docker-db
 
 docker-genkey: docker-build

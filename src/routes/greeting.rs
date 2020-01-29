@@ -30,21 +30,25 @@ pub async fn greeting(req: Request<Body>, settings: SettingsRef) -> Result<Respo
                 .body(err.to_string().into())?)
         }
     };
-    let json_req: GreetingRequest =
-        match json::read(&shared_secret.read(&base64::read(&body::read(req).await?)?)?) {
-            // let json_req: GreetingRequest = match json::read(&body::read(req).await?) {
-            Ok(json_req) => json_req,
-            Err(err) => {
-                return Ok(Response::builder()
-                    .status(StatusCode::BAD_REQUEST)
-                    .body(err.to_string().into())?)
-            }
-        };
-    let json_res = GreetingResponse {
-        hello: json_req.name,
+    let json_req: GreetingRequest = match body::read(req)
+        .await
+        .and_then(|req| base64::read(&req))
+        .and_then(|req| shared_secret.read(&req))
+        .and_then(|req| json::read(&req))
+    {
+        // let json_req: GreetingRequest = match body::read(req).await.and_then(|req| json::read(&req)) {
+        Ok(json_req) => json_req,
+        Err(err) => {
+            return Ok(Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(err.to_string().into())?)
+        }
     };
     // let json_res = json_req;
     // json::res(json::write(&json_res)?)
+    let json_res = GreetingResponse {
+        hello: json_req.name,
+    };
     Ok(Response::new(
         base64::write(&shared_secret.write(&json::write(&json_res)?)?).into(),
     ))

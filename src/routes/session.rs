@@ -22,14 +22,15 @@ pub async fn create_session(req: Request<Body>, settings: SettingsRef) -> Result
                 .body(err.to_string().into())?)
         }
     };
-    let json_req: PublicKeyExchangeMessage = match json::read(&body::read(req).await?) {
-        Ok(json_req) => json_req,
-        Err(err) => {
-            return Ok(Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .body(err.to_string().into())?)
-        }
-    };
+    let json_req: PublicKeyExchangeMessage =
+        match body::read(req).await.and_then(|req| json::read(&req)) {
+            Ok(json_req) => json_req,
+            Err(err) => {
+                return Ok(Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(err.to_string().into())?)
+            }
+        };
     match public_key.verify(
         json_req.ephemeral_public_key.as_ref(),
         json_req.signature.as_ref(),
