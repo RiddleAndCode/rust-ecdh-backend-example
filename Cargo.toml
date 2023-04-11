@@ -25,7 +25,7 @@ destination = "/bin/genkey"
 
 [dependencies]
 tokio = { version = "0.2", features = ["full"] }
-hyper = "0.13"
+hyper = "0.14"
 log = "0.4"
 simple_logger = "1.4"
 anyhow = "1.0"
